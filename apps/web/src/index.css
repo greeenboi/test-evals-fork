@@ -1,1 +1,26 @@
 @import "@test-evals/ui/globals.css";
+
+:root {
+	--dash-ink: oklch(0.18 0 0);
+	--dash-ink-soft: oklch(0.38 0.02 250);
+	--dash-warm: oklch(0.93 0.04 85);
+	--dash-cool: oklch(0.95 0.02 245);
+	--dash-accent: oklch(0.55 0.18 40);
+	--dash-accent-2: oklch(0.62 0.12 210);
+	--dash-border: oklch(0.86 0.02 250);
+}
+
+body {
+	background:
+		radial-gradient(circle at 10% 10%, color-mix(in oklab, var(--dash-warm) 55%, white), transparent 55%),
+		radial-gradient(circle at 90% 0%, color-mix(in oklab, var(--dash-cool) 60%, white), transparent 50%),
+		oklch(0.99 0 0);
+	color: var(--dash-ink);
+}
+
+h1,
+h2,
+h3 {
+	font-family: var(--font-display);
+	letter-spacing: -0.02em;
+}
