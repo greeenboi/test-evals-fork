@@ -16,6 +16,7 @@
     "db:migrate": "drizzle-kit migrate"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^0.10.4",
     "@test-evals/env": "workspace:*",
     "dotenv": "catalog:",
     "drizzle-orm": "^0.45.1",
