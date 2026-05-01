@@ -18,7 +18,7 @@ const EXAMPLES = [
   ),
   "",
   "Example 2:",
-  "Transcript: Patient here for medication refill. Taking lisinopril 10 mg daily by mouth. No vitals recorded. Plan: refill lisinopril, labs in 30 days. Follow up in 30 days for lab review.",
+  "Transcript: Patient here for medication refill. Taking metformin 500 mg BID by mouth. No vitals recorded. Plan: refill metformin, labs in 2 weeks. Follow up in 2 weeks for lab review.",
   "Output:",
   JSON.stringify(
     {
@@ -26,15 +26,34 @@ const EXAMPLES = [
       vitals: { bp: null, hr: null, temp_f: null, spo2: null },
       medications: [
         {
-          name: "lisinopril",
-          dose: "10 mg",
-          frequency: "daily",
+          name: "metformin",
+          dose: "500 mg",
+          frequency: "twice daily",
           route: "PO",
         },
       ],
       diagnoses: [],
-      plan: ["refill lisinopril", "labs in 30 days"],
-      follow_up: { interval_days: 30, reason: "lab review" },
+      plan: ["refill metformin", "labs in 2 weeks"],
+      follow_up: { interval_days: 14, reason: "lab review" },
+    },
+    null,
+    2,
+  ),
+  "",
+  "Example 3:",
+  "Transcript: Patient has chest tightness and wheezing. Assessment: asthma exacerbation. Plan: albuterol inhaler, start prednisone burst, avoid triggers. No follow-up scheduled.",
+  "Output:",
+  JSON.stringify(
+    {
+      chief_complaint: "chest tightness and wheezing",
+      vitals: { bp: null, hr: null, temp_f: null, spo2: null },
+      medications: [
+        { name: "albuterol inhaler", dose: null, frequency: null, route: null },
+        { name: "prednisone", dose: null, frequency: null, route: null },
+      ],
+      diagnoses: [{ description: "asthma exacerbation" }],
+      plan: ["albuterol inhaler", "start prednisone burst", "avoid triggers"],
+      follow_up: { interval_days: null, reason: null },
     },
     null,
     2,
