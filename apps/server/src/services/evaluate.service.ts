@@ -10,7 +10,13 @@ import type {
 } from "@test-evals/shared";
 
 const TEXT_MATCH_THRESHOLD = 0.8;
-const DIAGNOSIS_MATCH_THRESHOLD = 0.6;
+// Bidirectional recall threshold for diagnosis matching: either ≥50% of the gold
+// description's tokens appear in the prediction, OR ≥50% of the prediction's tokens
+// appear in the gold. This handles:
+//   over-specification: "external hemorrhoids" matches gold "hemorrhoids" (gold recall 1.0)
+//   under-specification: "constipation" matches gold "chronic constipation" (gold recall 0.5)
+//   synonym subsets: "cellulitis right calf" matches "cellulitis of right lower leg" (pred recall 0.67)
+const DIAG_RECALL_THRESHOLD = 0.5;
 // Minimum fraction of a predicted value's tokens that must appear in the transcript
 // for the value to be considered grounded. Token precision is the right metric here
 // because Jaccard against a long transcript always produces near-zero scores for
@@ -127,12 +133,25 @@ function scoreMedications(
   return setScore(matches.matched, predicted.length, gold.length);
 }
 
+function diagnosisDescriptionMatch(pred: string, gold: string): boolean {
+  const goldToks = tokenize(normalizeText(gold));
+  const predToks = tokenize(normalizeText(pred));
+  if (goldToks.length === 0) return true;
+  const predSet = new Set(predToks);
+  const goldSet = new Set(goldToks);
+  const goldRecall = goldToks.filter((t) => predSet.has(t)).length / goldToks.length;
+  if (goldRecall >= DIAG_RECALL_THRESHOLD) return true;
+  if (predToks.length === 0) return false;
+  const predRecall = predToks.filter((t) => goldSet.has(t)).length / predToks.length;
+  return predRecall >= DIAG_RECALL_THRESHOLD;
+}
+
 function scoreDiagnoses(
   predicted: ClinicalExtraction["diagnoses"],
   gold: ClinicalExtraction["diagnoses"],
 ): DiagnosisScore {
   const matches = matchSets(predicted, gold, (a, b) =>
-    fuzzyMatch(a.description, b.description) >= DIAGNOSIS_MATCH_THRESHOLD,
+    diagnosisDescriptionMatch(a.description, b.description),
   );
   const base = setScore(matches.matched, predicted.length, gold.length);
   const icd10Matches = matches.pairs.filter(([pred, truth]) =>
