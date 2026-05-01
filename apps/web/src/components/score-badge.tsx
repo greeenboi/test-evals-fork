@@ -14,7 +14,7 @@ export function ScoreBadge({ value, className }: { value: number; className?: st
   return (
     <span
       className={cn(
-        "inline-flex min-w-[4.5rem] items-center justify-center rounded-full px-3 py-1 text-xs font-semibold",
+        "inline-flex min-w-18 items-center justify-center rounded-full px-3 py-1 text-xs font-semibold",
         toneForScore(value),
         className,
       )}

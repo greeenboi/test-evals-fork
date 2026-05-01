@@ -62,12 +62,12 @@ export default function RunsList() {
           <CardDescription>Pick a prompt strategy and model to evaluate.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-[1fr_1fr_auto]">
-          <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--dash-ink-soft)]">
+          <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-(--dash-ink-soft)">
             Strategy
             <select
               value={strategy}
               onChange={(event) => setStrategy(event.target.value as PromptStrategy)}
-              className="rounded-full border border-[var(--dash-border)] bg-white px-4 py-2 text-sm"
+              className="rounded-full border border-(--dash-border) bg-white px-4 py-2 text-sm"
             >
               {STRATEGIES.map((value) => (
                 <option key={value} value={value}>
@@ -76,12 +76,12 @@ export default function RunsList() {
               ))}
             </select>
           </label>
-          <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--dash-ink-soft)]">
+          <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-(--dash-ink-soft)">
             Model
             <input
               value={model}
               onChange={(event) => setModel(event.target.value)}
-              className="rounded-full border border-[var(--dash-border)] bg-white px-4 py-2 text-sm"
+              className="rounded-full border border-(--dash-border) bg-white px-4 py-2 text-sm"
             />
           </label>
           <div className="flex items-end">
@@ -98,7 +98,7 @@ export default function RunsList() {
           <p className="text-sm text-muted-foreground">No runs yet. Start one above.</p>
         )}
         {runs.map((run) => (
-          <Card key={run.runId} className="border border-[var(--dash-border)] bg-white/90">
+          <Card key={run.runId} className="border border-(--dash-border) bg-white/90">
             <CardHeader>
               <div className="flex items-center justify-between gap-3">
                 <div>
@@ -107,25 +107,25 @@ export default function RunsList() {
                     {run.model}
                   </CardDescription>
                 </div>
-                <span className="rounded-full border border-[var(--dash-border)] px-3 py-1 text-xs uppercase tracking-[0.2em] text-[var(--dash-ink-soft)]">
+                <span className="rounded-full border border-(--dash-border) px-3 py-1 text-xs uppercase tracking-[0.2em] text-[var(--dash-ink-soft)]">
                   {run.status}
                 </span>
               </div>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
               <div className="flex items-center justify-between">
-                <span className="text-xs uppercase tracking-[0.2em] text-[var(--dash-ink-soft)]">
+                <span className="text-xs uppercase tracking-[0.2em] text-(--dash-ink-soft)">
                   Overall
                 </span>
                 <ScoreBadge value={run.fieldAverages.overall} />
               </div>
-              <div className="grid gap-2 text-xs text-[var(--dash-ink-soft)]">
+              <div className="grid gap-2 text-xs text-(--dash-ink-soft)">
                 <span>Cases: {run.completedCases}/{run.totalCases}</span>
                 <span>Cost: ${run.costUsd.toFixed(4)}</span>
                 <span>Wall time: {(run.wallTimeMs / 1000).toFixed(1)}s</span>
               </div>
               <Link
-                className="text-sm font-semibold text-[var(--dash-accent)] hover:underline"
+                className="text-sm font-semibold text-(--dash-accent) hover:underline"
                 href={`/dashboard/runs/${run.runId}`}
               >
                 View run details
