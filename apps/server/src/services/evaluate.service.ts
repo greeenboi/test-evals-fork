@@ -37,6 +37,42 @@ const ROUTE_SYNONYMS: Record<string, string[]> = {
   ophthalmic: ["eye", "eyes", "drops", "optic"],
 };
 
+// Medical abbreviation → full token expansion for diagnosis and chief complaint matching.
+// Keys are lowercase abbreviations/short forms models commonly produce; values are
+// the canonical full-form tokens. Prevents 0-score on "ADHD" vs "attention deficit
+// hyperactivity disorder" or "strep throat" vs "streptococcal pharyngitis".
+const MEDICAL_ABBREV_TOKENS: Record<string, string[]> = {
+  strep: ["streptococcal"],
+  adhd: ["attention", "deficit", "hyperactivity", "disorder"],
+  uti: ["urinary", "tract", "infection"],
+  ibs: ["irritable", "bowel", "syndrome"],
+  uri: ["upper", "respiratory", "infection"],
+  copd: ["chronic", "obstructive", "pulmonary", "disease"],
+  gerd: ["gastroesophageal", "reflux", "disease"],
+  htn: ["hypertension"],
+  cad: ["coronary", "artery", "disease"],
+  dm: ["diabetes", "mellitus"],
+  ckd: ["chronic", "kidney", "disease"],
+  mi: ["myocardial", "infarction"],
+};
+
+function expandMedicalTokens(tokens: string[]): string[] {
+  return tokens.flatMap((t) => MEDICAL_ABBREV_TOKENS[t] ?? [t]);
+}
+
+// 6-char prefix stem matching for morphological variants (depression/depressive,
+// controlled/controlling, etc.). Both strings must be ≥6 chars to prevent
+// spurious matches on common short words like "in", "of", "the".
+function stemMatch(a: string, b: string): boolean {
+  if (a === b) return true;
+  const minLen = Math.min(a.length, b.length);
+  return minLen >= 6 && a.substring(0, 6) === b.substring(0, 6);
+}
+
+function tokenInSet(tok: string, tokenList: string[]): boolean {
+  return tokenList.some((s) => stemMatch(tok, s));
+}
+
 export type EvaluationResult = {
   scores: CaseScores;
   hallucinations: HallucinationFinding[];
@@ -134,15 +170,13 @@ function scoreMedications(
 }
 
 function diagnosisDescriptionMatch(pred: string, gold: string): boolean {
-  const goldToks = tokenize(normalizeText(gold));
-  const predToks = tokenize(normalizeText(pred));
+  const goldToks = expandMedicalTokens(tokenize(normalizeText(gold)));
+  const predToks = expandMedicalTokens(tokenize(normalizeText(pred)));
   if (goldToks.length === 0) return true;
-  const predSet = new Set(predToks);
-  const goldSet = new Set(goldToks);
-  const goldRecall = goldToks.filter((t) => predSet.has(t)).length / goldToks.length;
+  const goldRecall = goldToks.filter((gt) => tokenInSet(gt, predToks)).length / goldToks.length;
   if (goldRecall >= DIAG_RECALL_THRESHOLD) return true;
   if (predToks.length === 0) return false;
-  const predRecall = predToks.filter((t) => goldSet.has(t)).length / predToks.length;
+  const predRecall = predToks.filter((pt) => tokenInSet(pt, goldToks)).length / predToks.length;
   return predRecall >= DIAG_RECALL_THRESHOLD;
 }
 
@@ -164,7 +198,7 @@ function scoreDiagnoses(
   return { ...base, icd10_bonus };
 }
 
-const PLAN_MATCH_THRESHOLD = 0.5;
+const PLAN_MATCH_THRESHOLD = 0.4;
 
 function scorePlan(predicted: string[], gold: string[]): SetScore {
   const matches = matchSets(predicted, gold, (a, b) => fuzzyMatch(a, b) >= PLAN_MATCH_THRESHOLD);

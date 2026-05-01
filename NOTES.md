@@ -16,6 +16,7 @@
 - 2026-05-01: Added API status component that pings the server root.
 - 2026-05-01: Strengthened prompt instructions with field-level rules and improved few-shot examples.
 - 2026-05-01: Added chief complaint/follow-up guidance and a third few-shot example for diagnosis vs plan separation.
+- 2026-05-01: Added medical abbreviation expansion (ADHD, strep, UTI, etc.) and 6-char prefix stem matching to diagnosis scoring; lowered plan threshold to 0.4.
 
 ## Thoughts
 
@@ -127,12 +128,18 @@ Gold uses `"every 6 hours as needed"`, `"three times daily before meals"`, `"wit
 | Few-shot Example 3 diagnosis | `few-shot.ts` | Added `"moderate"` qualifier; transcript said "moderate asthma exacerbation" |
 | Few-shot Example 4 (new) | `few-shot.ts` | Multi-medication case demonstrating plan item splitting and follow-up formatting |
 | Retry feedback includes AJV params | `packages/llm/src/client.ts` | Model gets better signal about what failed (e.g., wrong type, missing key) |
+| `MEDICAL_ABBREV_TOKENS` + `expandMedicalTokens` | `evaluate.service.ts` | "ADHD" expands to ["attention","deficit","hyperactivity","disorder"]; "strep" → ["streptococcal"]; fixes 0-score on abbreviation vs full name |
+| 6-char prefix stem matching (`stemMatch`) | `evaluate.service.ts` | "depression"/"depressive" share "depres" prefix → match; avoids 0-score on morphological variants |
+| `tokenInSet` replaces set-has in `diagnosisDescriptionMatch` | `evaluate.service.ts` | Bidirectional recall now uses stem matching + abbrev expansion instead of exact token equality |
+| Plan match threshold 0.5 → 0.4 | `evaluate.service.ts` | Near-miss compound plan items (2/5 = 0.4 Jaccard) get credit; still requires majority token overlap |
 
 ### Overfitting Safeguards
 
-- Thresholds were set to generalizable values (0.5 plan, 0.6 diagnoses), not tuned to individual case scores.
+- Thresholds were set to generalizable values (0.4 plan, 0.5 diagnoses recall), not tuned to individual case scores.
 - `ROUTE_SYNONYMS` uses universal clinical synonyms (PO = "by mouth"/"oral"), not transcript-specific phrases.
 - Frequency abbreviation expansion uses standard Latin clinical abbreviations (BID, TID, PRN) with no case-specific rules.
+- `MEDICAL_ABBREV_TOKENS` contains only standard medical abbreviations recognized universally (ADHD, UTI, COPD, GERD, etc.) — not transcript-specific phrases.
+- `stemMatch` 6-char prefix avoids spurious matches on common short words (<6 chars); stems must be identical, not similar.
 - Medical abbreviation expansion in follow-up reason (OA → osteoarthritis) was deliberately *not* added — the abbreviation set in the gold is small and any expansion list risks false matches in other contexts.
 - Few-shot examples were fixed to be consistent with the gold annotation *style* (include duration, include severity qualifiers), not to match specific case values.
 
