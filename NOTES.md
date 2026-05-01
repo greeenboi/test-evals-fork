@@ -14,6 +14,8 @@
 - 2026-05-01: Added evaluation, retry, prompt hash, and runner helper tests plus test scripts.
 - 2026-05-01: Added case detail trace panel for LLM attempts.
 - 2026-05-01: Added API status component that pings the server root.
+- 2026-05-01: Strengthened prompt instructions with field-level rules and improved few-shot examples.
+- 2026-05-01: Added chief complaint/follow-up guidance and a third few-shot example for diagnosis vs plan separation.
 
 ## Thoughts
 

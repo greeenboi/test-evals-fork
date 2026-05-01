@@ -58,6 +58,34 @@ const EXAMPLES = [
     null,
     2,
   ),
+  "",
+  "Example 4:",
+  "Transcript: 52-year-old with hypertension and type 2 diabetes. BP 148/92, HR 76, Temp 98.6F, SpO2 99. On lisinopril 10 mg daily PO and metformin 1000 mg BID PO. Plan: increase lisinopril to 20 mg, continue metformin, dietary counseling, recheck BP in office, labs including HbA1c. Return in 4 weeks.",
+  "Output:",
+  JSON.stringify(
+    {
+      chief_complaint: "hypertension and type 2 diabetes",
+      vitals: { bp: "148/92", hr: 76, temp_f: 98.6, spo2: 99 },
+      medications: [
+        { name: "lisinopril", dose: "10 mg", frequency: "once daily", route: "PO" },
+        { name: "metformin", dose: "1000 mg", frequency: "twice daily", route: "PO" },
+      ],
+      diagnoses: [
+        { description: "hypertension" },
+        { description: "type 2 diabetes" },
+      ],
+      plan: [
+        "increase lisinopril to 20 mg",
+        "continue metformin",
+        "dietary counseling",
+        "recheck BP in office",
+        "labs including HbA1c",
+      ],
+      follow_up: { interval_days: 28, reason: null },
+    },
+    null,
+    2,
+  ),
 ].join("\n");
 
 export const fewShotPrompt = {

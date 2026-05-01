@@ -5,7 +5,7 @@ import type { ClinicalExtraction, LlmAttempt, PromptStrategy, TokenUsage } from 
 import { cotPrompt, fewShotPrompt, zeroShotPrompt } from "./strategies";
 
 export const TOOL_NAME = "extract_clinical_data";
-const DEFAULT_MAX_TOKENS = 1200;
+const DEFAULT_MAX_TOKENS = 2048;
 
 type JsonSchema = Record<string, unknown>;
 
@@ -216,7 +216,11 @@ function formatAjvErrors(errors: ErrorObject[] | null | undefined): string[] {
   return errors.map((error) => {
     const location = error.instancePath || "root";
     const message = error.message ?? "failed validation";
-    return `${location}: ${message}`;
+    const extra =
+      error.params && Object.keys(error.params).length > 0
+        ? ` (${JSON.stringify(error.params)})`
+        : "";
+    return `${location}: ${message}${extra}`;
   });
 }
 

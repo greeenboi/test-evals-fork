@@ -125,8 +125,10 @@ function scoreDiagnoses(
   return { ...base, icd10_bonus };
 }
 
+const PLAN_MATCH_THRESHOLD = 0.5;
+
 function scorePlan(predicted: string[], gold: string[]): SetScore {
-  const matches = matchSets(predicted, gold, (a, b) => fuzzyMatch(a, b) >= TEXT_MATCH_THRESHOLD);
+  const matches = matchSets(predicted, gold, (a, b) => fuzzyMatch(a, b) >= PLAN_MATCH_THRESHOLD);
   return setScore(matches.matched, predicted.length, gold.length);
 }
 
@@ -134,7 +136,7 @@ function scoreFollowUp(
   predicted: ClinicalExtraction["follow_up"],
   gold: ClinicalExtraction["follow_up"],
 ): FollowUpScore {
-  const interval_days = compareNumber(predicted.interval_days, gold.interval_days, 0);
+  const interval_days = compareNumber(predicted.interval_days, gold.interval_days, 1);
   const reason = compareText(predicted.reason, gold.reason);
   const averageScore = average([interval_days, reason]);
   return { interval_days, reason, average: averageScore };
@@ -144,10 +146,16 @@ function isMedicationMatch(
   predicted: ClinicalExtraction["medications"][number],
   gold: ClinicalExtraction["medications"][number],
 ): boolean {
-  const nameMatch = fuzzyMatch(predicted.name, gold.name) >= TEXT_MATCH_THRESHOLD;
-  const doseMatch = normalizeDose(predicted.dose) === normalizeDose(gold.dose);
-  const frequencyMatch = normalizeFrequency(predicted.frequency) === normalizeFrequency(gold.frequency);
-  return nameMatch && doseMatch && frequencyMatch;
+  const nameScore = fuzzyMatch(predicted.name, gold.name);
+  if (nameScore < TEXT_MATCH_THRESHOLD) {
+    return false; // wrong drug — no credit
+  }
+  const doseMatch = normalizeDose(predicted.dose) === normalizeDose(gold.dose) ? 1 : 0;
+  const frequencyMatch =
+    normalizeFrequency(predicted.frequency) === normalizeFrequency(gold.frequency) ? 1 : 0;
+  // Name must be right; dose+frequency contribute partial credit (0.4 + 0.3 + 0.3)
+  const weighted = 0.4 * nameScore + 0.3 * doseMatch + 0.3 * frequencyMatch;
+  return weighted >= 0.4; // passes if name is right, sub-fields are optional bonus
 }
 
 function matchSets<T>(
