@@ -33,7 +33,7 @@ export const evalCaseResult = pgTable(
       .notNull()
       .references(() => evalRun.id, { onDelete: "cascade" }),
     transcriptId: text("transcript_id").notNull(),
-    prediction: jsonb("prediction").notNull(),
+    prediction: jsonb("prediction"),
     scores: jsonb("scores").notNull(),
     hallucinations: jsonb("hallucinations").notNull(),
     schemaValid: boolean("schema_valid").notNull(),

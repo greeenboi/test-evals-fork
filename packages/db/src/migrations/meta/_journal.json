@@ -15,6 +15,13 @@
       "when": 1777586845974,
       "tag": "0001_flimsy_omega_red",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1777637287757,
+      "tag": "0002_tricky_proemial_gods",
+      "breakpoints": true
     }
   ]
 }

@@ -1,0 +1,1 @@
+ALTER TABLE "eval_case_result" ALTER COLUMN "prediction" DROP NOT NULL;
