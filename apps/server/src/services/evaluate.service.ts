@@ -11,6 +11,11 @@ import type {
 
 const TEXT_MATCH_THRESHOLD = 0.8;
 const DIAGNOSIS_MATCH_THRESHOLD = 0.6;
+// Minimum fraction of a predicted value's tokens that must appear in the transcript
+// for the value to be considered grounded. Token precision is the right metric here
+// because Jaccard against a long transcript always produces near-zero scores for
+// short extracted strings (7-token plan item / 80-token transcript ≈ 0.07).
+const HALLUCINATION_PRECISION_THRESHOLD = 0.6;
 
 // Standard clinical abbreviations that are valid schema outputs but never appear
 // verbatim in transcripts. Checking them for hallucinations produces only false positives.
@@ -234,6 +239,14 @@ function compareNumber(a: number | null, b: number | null, tolerance: number): n
   return Math.abs(a - b) <= tolerance ? 1 : 0;
 }
 
+function tokenPrecision(value: string, document: string): number {
+  const valueTokens = tokenize(value);
+  if (valueTokens.length === 0) return 1;
+  const docTokenSet = new Set(tokenize(document));
+  const matched = valueTokens.filter((t) => docTokenSet.has(t)).length;
+  return matched / valueTokens.length;
+}
+
 function fuzzyMatch(a: string, b: string): number {
   const tokensA = tokenize(a);
   const tokensB = tokenize(b);
@@ -283,7 +296,11 @@ const FREQ_ABBREV_MAP: Array<[RegExp, string]> = [
   [/\bbid\b/g, "twice daily"],
   [/\btid\b/g, "three times daily"],
   [/\bqid\b/g, "four times daily"],
-  [/\bonce a day\b/g, "once daily"],
+  // "N times a day" word forms → canonical "N times daily"
+  [/\bonce\s+a\s+day\b/g, "once daily"],
+  [/\btwice\s+a\s+day\b/g, "twice daily"],
+  [/\bthree\s+times\s+a\s+day\b/g, "three times daily"],
+  [/\bfour\s+times\s+a\s+day\b/g, "four times daily"],
   [/\b2x(?:\s+(?:a\s+)?(?:day|daily|per day))\b/g, "twice daily"],
   [/\b3x(?:\s+(?:a\s+)?(?:day|daily|per day))\b/g, "three times daily"],
   [/\b4x(?:\s+(?:a\s+)?(?:day|daily|per day))\b/g, "four times daily"],
@@ -323,15 +340,20 @@ function detectHallucinations(
     if (!normalizedValue) {
       return true;
     }
+    // Exact substring match
     if (transcriptNorm.includes(normalizedValue)) {
       return true;
     }
-    // Check route synonyms so "PO" grounded by "by mouth", "oral", etc.
+    // Route synonym expansion: "PO" grounded by "by mouth", "oral", etc.
     const routeSynonyms = ROUTE_SYNONYMS[normalizedValue];
     if (routeSynonyms?.some((syn) => transcriptNorm.includes(syn))) {
       return true;
     }
-    return fuzzyMatch(valueText, transcript) >= TEXT_MATCH_THRESHOLD;
+    // Token precision: what fraction of the value's tokens appear anywhere in the transcript.
+    // Jaccard is symmetric — a 7-token value against an 80-token transcript scores ~0.07
+    // even when all 7 tokens are present. Precision asks the right question: "is this
+    // value supported by the transcript?" without penalizing transcript length.
+    return tokenPrecision(normalizedValue, transcriptNorm) >= HALLUCINATION_PRECISION_THRESHOLD;
   };
 
   const checkValue = (field: string, value: string | number | null | undefined) => {
@@ -370,7 +392,9 @@ function detectHallucinations(
     checkValue(`plan[${index}]`, item);
   });
 
-  checkValue("follow_up.interval_days", prediction.follow_up.interval_days);
+  // interval_days is a schema-mandated numeric conversion (e.g., "3 months" → 90).
+  // The converted integer never appears verbatim in the transcript, so checking it
+  // produces only false positives — same reasoning as skipping ICD-10 codes.
   checkValue("follow_up.reason", prediction.follow_up.reason);
 
   return findings.filter((finding) => finding.evidence === null);

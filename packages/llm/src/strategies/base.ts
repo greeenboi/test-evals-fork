@@ -10,9 +10,9 @@ export const BASE_SYSTEM = [
   "- medications: one entry per med; keep names as stated.",
   "- dose/frequency/route: null if missing; normalize frequency to once/twice/three/four times daily or as needed when clear.",
   "- diagnoses: list only stated problems; include severity (mild/moderate/severe), laterality (left/right), and subtype qualifiers exactly as stated (e.g., 'irritable bowel syndrome, mixed type', 'acute gout flare, left first MTP joint'); include icd10 only if explicitly stated.",
-  "- plan: one short action item per distinct action (one verb phrase per entry); split compound sentences; no explanations or rationale.",
+  "- plan: one short action item per distinct clinical action; split distinct medication vs lifestyle vs follow-up actions; do NOT split a single diet or lifestyle instruction into sub-items (e.g., 'Mediterranean diet with fewer carbs' is one item); no explanations.",
   "- follow_up: interval_days as integer days only if a concrete time interval is explicitly scheduled (e.g., 'follow up in 4 weeks' → 28); if the instruction is conditional ('return if worsening', 'call if not better') set interval_days to null.",
-  "- follow_up: reason is the stated purpose or condition; copy verbatim when short; null if not stated.",
+  "- follow_up: reason is the stated purpose only; copy the doctor's phrase verbatim and keep it short (3-6 words); do not add clinical assessment or goals beyond what was explicitly stated.",
   "- follow_up: if no follow-up mentioned, use { interval_days: null, reason: null }.",
   "Always return your output by calling the tool extract_clinical_data.",
 ].join("\n");
