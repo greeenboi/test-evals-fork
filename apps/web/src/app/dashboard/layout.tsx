@@ -25,7 +25,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-svh">
-      <div className="grid gap-6 px-4 py-6 md:grid-cols-[200px_1fr]">
+      <div className="grid gap-6 px-4 py-6 md:grid-cols-[300px_1fr]">
         <aside className="flex flex-col gap-4">
           <div className="rounded-3xl border border-[var(--dash-border)] bg-white/80 p-4">
             <p className="text-xs uppercase tracking-[0.2em] text-[var(--dash-ink-soft)]">Evaluator</p>

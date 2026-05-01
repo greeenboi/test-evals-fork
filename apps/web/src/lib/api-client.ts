@@ -26,6 +26,13 @@ export async function apiFetch<T>(path: string, options: FetchOptions = {}): Pro
   return (await response.json()) as T;
 }
 
+export async function pingServer(): Promise<boolean> {
+  const response = await fetch(`${BASE_URL}/`, {
+    credentials: "include",
+  });
+  return response.ok;
+}
+
 export function listRuns() {
   return apiFetch<RunSummary[]>("/api/v1/runs");
 }
