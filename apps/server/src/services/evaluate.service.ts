@@ -274,27 +274,34 @@ function normalizeDose(value: string | null): string | null {
   return value.toLowerCase().replace(/\s+/g, "").trim();
 }
 
+// Expand Latin abbreviations as whole tokens before comparison so that
+// "every 6 hours PRN" and "every 6 hours as needed" score as equivalent.
+const FREQ_ABBREV_MAP: Array<[RegExp, string]> = [
+  [/\bprn\b/g, "as needed"],
+  [/\bq(\d+)h\b/g, "every $1 hours"],
+  [/\bqd\b/g, "once daily"],
+  [/\bbid\b/g, "twice daily"],
+  [/\btid\b/g, "three times daily"],
+  [/\bqid\b/g, "four times daily"],
+  [/\bonce a day\b/g, "once daily"],
+  [/\b2x(?:\s+(?:a\s+)?(?:day|daily|per day))\b/g, "twice daily"],
+  [/\b3x(?:\s+(?:a\s+)?(?:day|daily|per day))\b/g, "three times daily"],
+  [/\b4x(?:\s+(?:a\s+)?(?:day|daily|per day))\b/g, "four times daily"],
+];
+
+function expandFreqAbbreviations(text: string): string {
+  let result = text;
+  for (const [pattern, replacement] of FREQ_ABBREV_MAP) {
+    result = result.replace(pattern, replacement);
+  }
+  return result.replace(/\s+/g, " ").trim();
+}
+
 function normalizeFrequency(value: string | null): string | null {
   if (!value) {
     return null;
   }
-  const normalized = normalizeText(value);
-  if (["bid", "b i d", "twice daily", "2x daily", "2x day", "2x per day"].includes(normalized)) {
-    return "twice daily";
-  }
-  if (["qd", "q d", "daily", "once daily", "once a day"].includes(normalized)) {
-    return "once daily";
-  }
-  if (["tid", "t i d", "three times daily", "3x daily", "3x per day"].includes(normalized)) {
-    return "three times daily";
-  }
-  if (["qid", "q i d", "four times daily", "4x daily", "4x per day"].includes(normalized)) {
-    return "four times daily";
-  }
-  if (["prn", "as needed"].includes(normalized)) {
-    return "as needed";
-  }
-  return normalized;
+  return expandFreqAbbreviations(normalizeText(value));
 }
 
 function normalizeIcd10(value: string | undefined): string | null {

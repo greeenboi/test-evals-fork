@@ -51,7 +51,7 @@ const EXAMPLES = [
         { name: "albuterol inhaler", dose: null, frequency: null, route: null },
         { name: "prednisone", dose: null, frequency: null, route: null },
       ],
-      diagnoses: [{ description: "asthma exacerbation" }],
+      diagnoses: [{ description: "moderate asthma exacerbation" }],
       plan: ["albuterol inhaler", "start prednisone burst", "avoid triggers"],
       follow_up: { interval_days: null, reason: null },
     },
