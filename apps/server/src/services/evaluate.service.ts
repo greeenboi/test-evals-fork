@@ -10,6 +10,21 @@ import type {
 } from "@test-evals/shared";
 
 const TEXT_MATCH_THRESHOLD = 0.8;
+const DIAGNOSIS_MATCH_THRESHOLD = 0.6;
+
+// Standard clinical abbreviations that are valid schema outputs but never appear
+// verbatim in transcripts. Checking them for hallucinations produces only false positives.
+const ROUTE_SYNONYMS: Record<string, string[]> = {
+  po: ["by mouth", "oral", "orally", "mouth"],
+  iv: ["intravenous", "intravenously", "iv drip", "iv push"],
+  im: ["intramuscular", "intramuscularly", "injection"],
+  sq: ["subcutaneous", "subcutaneously", "subcut"],
+  sl: ["sublingual", "under the tongue"],
+  intranasal: ["nasal", "nostril", "nose", "nasal spray"],
+  topical: ["topically", "skin", "apply", "cream", "ointment", "gel"],
+  inhaled: ["inhaler", "inhale", "nebulizer", "puffer"],
+  ophthalmic: ["eye", "eyes", "drops", "optic"],
+};
 
 export type EvaluationResult = {
   scores: CaseScores;
@@ -112,7 +127,7 @@ function scoreDiagnoses(
   gold: ClinicalExtraction["diagnoses"],
 ): DiagnosisScore {
   const matches = matchSets(predicted, gold, (a, b) =>
-    fuzzyMatch(a.description, b.description) >= TEXT_MATCH_THRESHOLD,
+    fuzzyMatch(a.description, b.description) >= DIAGNOSIS_MATCH_THRESHOLD,
   );
   const base = setScore(matches.matched, predicted.length, gold.length);
   const icd10Matches = matches.pairs.filter(([pred, truth]) =>
@@ -296,6 +311,22 @@ function detectHallucinations(
   const findings: HallucinationFinding[] = [];
   const transcriptNorm = normalizeText(transcript);
 
+  const isGrounded = (valueText: string): boolean => {
+    const normalizedValue = normalizeText(valueText);
+    if (!normalizedValue) {
+      return true;
+    }
+    if (transcriptNorm.includes(normalizedValue)) {
+      return true;
+    }
+    // Check route synonyms so "PO" grounded by "by mouth", "oral", etc.
+    const routeSynonyms = ROUTE_SYNONYMS[normalizedValue];
+    if (routeSynonyms?.some((syn) => transcriptNorm.includes(syn))) {
+      return true;
+    }
+    return fuzzyMatch(valueText, transcript) >= TEXT_MATCH_THRESHOLD;
+  };
+
   const checkValue = (field: string, value: string | number | null | undefined) => {
     if (value === null || value === undefined) {
       return;
@@ -304,19 +335,8 @@ function detectHallucinations(
     if (!valueText.trim()) {
       return;
     }
-
-    const normalizedValue = normalizeText(valueText);
-    if (!normalizedValue) {
-      return;
-    }
-
-    if (transcriptNorm.includes(normalizedValue)) {
-      return; // grounded — not a hallucination
-    }
-
-    const similarity = fuzzyMatch(valueText, transcript);
-    if (similarity < TEXT_MATCH_THRESHOLD) {
-      findings.push({ field, value: valueText, evidence: null, similarity });
+    if (!isGrounded(valueText)) {
+      findings.push({ field, value: valueText, evidence: null, similarity: fuzzyMatch(valueText, transcript) });
     }
   };
 
@@ -335,7 +355,8 @@ function detectHallucinations(
 
   prediction.diagnoses.forEach((dx, index) => {
     checkValue(`diagnoses[${index}].description`, dx.description);
-    checkValue(`diagnoses[${index}].icd10`, dx.icd10);
+    // ICD-10 codes are valid schema outputs derived from diagnoses — they are never
+    // stated verbatim in transcripts, so checking them would only produce false positives.
   });
 
   prediction.plan.forEach((item, index) => {

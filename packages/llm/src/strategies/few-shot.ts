@@ -6,7 +6,7 @@ const EXAMPLES = [
   "Output:",
   JSON.stringify(
     {
-      chief_complaint: "sore throat and cough",
+      chief_complaint: "sore throat and cough for 3 days",
       vitals: { bp: "120/80", hr: 88, temp_f: 99.1, spo2: 98 },
       medications: [],
       diagnoses: [{ description: "viral URI", icd10: "J06.9" }],
