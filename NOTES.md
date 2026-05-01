@@ -13,6 +13,7 @@
 - 2026-05-01: Exposed dataset/backoff helpers to support upcoming tests.
 - 2026-05-01: Added evaluation, retry, prompt hash, and runner helper tests plus test scripts.
 - 2026-05-01: Added case detail trace panel for LLM attempts.
+- 2026-05-01: Added API status component that pings the server root.
 
 ## Thoughts
 
