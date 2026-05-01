@@ -7,6 +7,9 @@ You're shipping an LLM-powered feature that turns a clinical transcript into str
 Your job is to build that harness end-to-end: dataset loader, runner, evaluator, dashboard.
 
 ---
+<img width="1445" height="537" alt="image" src="https://github.com/user-attachments/assets/1fce67b6-3a17-471a-aa45-f351a1aef46f" />
+
+---
 
 ## Table of Contents
 
